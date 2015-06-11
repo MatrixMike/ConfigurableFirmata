@@ -24,10 +24,16 @@ void digitalOutputWriteCallback(byte port, int value)
   DigitalOutputFirmataInstance->digitalWrite(port, value);
 }
 
+void setPinValueCallback(byte pin, int value)
+{
+  DigitalOutputFirmataInstance->digitalPinWrite(pin, value);
+}
+
 DigitalOutputFirmata::DigitalOutputFirmata()
 {
   DigitalOutputFirmataInstance = this;
   Firmata.attach(DIGITAL_MESSAGE, digitalOutputWriteCallback);
+  Firmata.attach(SET_DIGITAL_PIN_VALUE, setPinValueCallback);
 }
 
 boolean DigitalOutputFirmata::handleSysex(byte command, byte argc, byte* argv)
@@ -62,6 +68,25 @@ void DigitalOutputFirmata::digitalWrite(byte port, int value)
       mask = mask << 1;
     }
     writePort(port, (byte)value, pinWriteMask);
+  }
+}
+
+/*
+ * Sets the value of an individual pin.
+ * Useful if you want to set a pin value but are not tracking the digital port state.
+ */
+void DigitalOutputFirmata::digitalPinWrite(byte pin, int value)
+{
+  if (pin < TOTAL_PINS && IS_PIN_DIGITAL(pin)) {
+    byte pinMode = Firmata.getPinMode(pin);
+    if (pinMode == OUTPUT || pinMode == INPUT) {
+      Firmata.setPinState(pin, value ? 1 : 0);
+      byte port = pin/8;
+      byte index = pin - port*8;
+      writePort(port, value ? 1 << index : 0, 1 << index);
+      // TBD - writePort works here but not digitalWrite?  Why?
+      //digitalWrite(PIN_TO_DIGITAL(pin), value ? 1 << index : 0);
+    }
   }
 }
 

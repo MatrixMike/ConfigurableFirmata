@@ -21,12 +21,14 @@
 #include "FirmataFeature.h"
 
 void digitalOutputWriteCallback(byte port, int value);
+void setPinValueCallback(byte pin, int value);
 
 class DigitalOutputFirmata: public FirmataFeature
 {
   public:
     DigitalOutputFirmata();
     void digitalWrite(byte port, int value);
+    void digitalPinWrite(byte pin, int value);
     void handleCapability(byte pin);
     boolean handleSysex(byte command, byte argc, byte* argv);
     boolean handlePinMode(byte pin, int mode);
